@@ -36,6 +36,7 @@ def c_checker_arr(x, intrvl):
         print("done from ", x[0], " to ", x[-1])
     else:
         print("YO number is:", x[i], "and loop at: ", c_checker(x[i])[1])
+        return 0, x[i]
 
         
 ###Routine
@@ -52,7 +53,12 @@ while(1):
 
     x_arr = np.arange(current_no, current_no+intrvl)
 
-    c_checker_arr(x_arr, intrvl)
+    run = c_checker_arr(x_arr, intrvl)
+    
+    if run[0] == 0:
+        f = open("status.txt", "w")
+        f.write("motherfucking loop or divergence at " + str(x[i]))
+        break
 
     current_new = current_no+intrvl-1
 
