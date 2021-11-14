@@ -1,0 +1,1 @@
+No loops or divergence yet
