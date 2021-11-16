@@ -1,5 +1,26 @@
 import numpy as np
 import json
+import logging
+
+
+####### init logging style
+
+#create a logger
+logger = logging.getLogger('mylogger')
+#set logger level
+logger.setLevel(logging.INFO)
+#or you can set the following level
+#logger.setLevel(logging.DEBUG)
+
+handler = logging.FileHandler('app.log')
+# create a logging format
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+
+
+
+
 
 
 ####### defs
@@ -22,10 +43,9 @@ def c_checker(n):
         pastvals.append(n)
         i = i+1 
         if i>1e6:
-            print("might be diverging")
+            #print("might be diverging")
             return True, n 
     return False, i
-
 
 
 def c_checker_arr(x, intrvl):
@@ -34,12 +54,30 @@ def c_checker_arr(x, intrvl):
         i = i+1
     if i==intrvl-1:
         print("done from ", x[0], " to ", x[-1])
+        return 1, 1 #return second 1 as default
     else:
         print("YO number is:", x[i], "and loop at: ", c_checker(x[i])[1])
         return 0, x[i]
+    
 
+def progress_save(currento, foundno, interval=2**16):
+    if foundno == 1:
+        logger.info("done from "+ str(currento)+ " to "+ str(currento + interval))
+    else:
+        logger.critical("motherfucking loop or divergence at " + str(foundno))
         
-###Routine
+    dict = {'Start' : 2**120, 'Interval' : interval, 'Current' : currento + interval, "Found_no" : foundno}
+
+    jsondat = json.dumps(dict)
+
+    f = open("progress.json","w") # w for write, r for read
+
+    f.write(jsondat)
+    f.close()
+
+      
+        
+###### Routine
 while(1):
     # load data
 
@@ -47,31 +85,24 @@ while(1):
     dat = json.loads(f.read())
     current_no = dat["Current"]
     intrvl = dat["Interval"]
+    foundno = dat["Found_no"]
+    if foundno != 1:
+        print("Already found Collatz breaking number in: ", foundno)
+        break
     f.close()
 
     # execute  collatz test
 
-    x_arr = np.arange(current_no, current_no+intrvl)
+    x_arr = np.arange(current_no, current_no+intrvl+1) #+1 b/c np.arange[1,2]=[1]
 
     run = c_checker_arr(x_arr, intrvl)
     
     if run[0] == 0:
-        f = open("status.txt", "w")
-        f.write("motherfucking loop or divergence at " + str(x[i]))
+        progress_save(current_no, run[1], intrvl)
         break
-
-    current_new = current_no+intrvl-1
-
-
-    # save data
+    elif run[0] == 1:
+        progress_save(current_no, run[1], intrvl)
 
 
-    dict = {'Start' : 2**120, 'Interval' : 2**16, 'Current' : current_new}
 
-    jsondat = json.dumps(dict)
 
-    f = open("progress.json","w") # w for write, r for read
-
-    f.write(jsondat)
-
-    f.close()
